@@ -1,5 +1,12 @@
 # AgentGuard Core has ZERO mandatory external dependencies (built on Python 3 Standard Library).
-# Optional integrations:
+#
+# Optional Hugging Face Neural Embedding Integrations:
+# sentence-transformers>=2.2.0
+# transformers>=4.30.0
+# huggingface_hub>=0.20.0
+# torch>=2.0.0
+#
+# Optional Framework Integrations:
 # langchain>=0.1.0
 # chromadb>=0.4.0
 # crewai>=0.28.0

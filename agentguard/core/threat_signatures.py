@@ -4,7 +4,7 @@ Contains canonical attack vectors, indirect prompt injections,
 jailbreaks, and data exfiltration patterns with precomputed vector embeddings.
 """
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 from .embedding import default_engine
 
 
@@ -26,7 +26,18 @@ class ThreatSignature:
         self.severity = severity  # "CRITICAL", "HIGH", "MEDIUM"
         self.description = description
         self.threshold = threshold
-        self.embedding = default_engine.embed(pattern)
+        self._cached_embeddings: Dict[Tuple[str, str, int], List[float]] = {}
+        self.embedding = self.get_embedding(default_engine)
+
+    def get_embedding(self, engine=default_engine) -> List[float]:
+        """Returns or lazily computes the vector embedding for the specified engine."""
+        backend = getattr(engine, "active_backend", "builtin")
+        model = getattr(engine, "model_name", "default")
+        dim = getattr(engine, "dimensions", 512)
+        key = (backend, model, dim)
+        if key not in self._cached_embeddings:
+            self._cached_embeddings[key] = engine.embed(self.pattern)
+        return self._cached_embeddings[key]
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -127,6 +138,14 @@ class ThreatSignatureRegistry:
     def list_signatures(self) -> List[Dict[str, Any]]:
         return [sig.to_dict() for sig in self.signatures]
 
+    def recompute_embeddings(self, engine=default_engine):
+        """Recomputes all threat signature vector representations with the specified engine."""
+        for sig in self.signatures:
+            if hasattr(sig, "get_embedding"):
+                sig.embedding = sig.get_embedding(engine)
+            else:
+                sig.embedding = engine.embed(sig.pattern)
+
     def scan(self, text: str, engine=default_engine) -> List[Dict[str, Any]]:
         """
         Scans input text against all signatures, calculating cosine similarity
@@ -136,8 +155,9 @@ class ThreatSignatureRegistry:
         matches = []
 
         for sig in self.signatures:
-            similarity = engine.cosine_similarity(query_vec, sig.embedding)
-            distance = engine.cosine_distance(query_vec, sig.embedding)
+            sig_vec = sig.get_embedding(engine) if hasattr(sig, "get_embedding") else sig.embedding
+            similarity = engine.cosine_similarity(query_vec, sig_vec)
+            distance = engine.cosine_distance(query_vec, sig_vec)
             
             # Confidence score between 0.0 and 1.0
             confidence = max(0.0, min(1.0, similarity))

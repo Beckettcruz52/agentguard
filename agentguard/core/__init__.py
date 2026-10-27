@@ -1,5 +1,13 @@
 """AgentGuard Core Security Suite."""
-from .embedding import SemanticEmbeddingEngine, default_engine
+from .embedding import (
+    SemanticEmbeddingEngine,
+    HuggingFaceEmbeddingEngine,
+    DualModeEmbeddingEngine,
+    default_engine,
+    HAS_SENTENCE_TRANSFORMERS,
+    HAS_TRANSFORMERS,
+    HAS_HF_HUB,
+)
 from .threat_signatures import ThreatSignature, ThreatSignatureRegistry, default_registry
 from .rag_scanner import VectorMemoryScanner, RAGMemoryRecord, default_scanner
 from .rbac import RolePolicy, RBACPolicyEngine, default_rbac
@@ -11,7 +19,12 @@ from .mail_sentinel import MailSentinel, default_mail_sentinel
 
 __all__ = [
     "SemanticEmbeddingEngine",
+    "HuggingFaceEmbeddingEngine",
+    "DualModeEmbeddingEngine",
     "default_engine",
+    "HAS_SENTENCE_TRANSFORMERS",
+    "HAS_TRANSFORMERS",
+    "HAS_HF_HUB",
     "ThreatSignature",
     "ThreatSignatureRegistry",
     "default_registry",

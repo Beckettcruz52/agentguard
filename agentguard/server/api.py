@@ -158,9 +158,17 @@ class AgentGuardRequestHandler(BaseHTTPRequestHandler):
                 "blocked_tool_escalations": tool_stats["total_blocked"],
                 "dry_run_sandboxed_runs": tool_stats["executed_dry_run"],
                 "threat_signatures_count": len(default_registry.signatures),
-                "avg_inspection_latency_ms": 1.4
+                "avg_inspection_latency_ms": 1.4,
+                "embedding_backend": getattr(default_engine, "active_backend", "builtin"),
+                "embedding_mode": getattr(default_engine, "mode", "auto"),
+                "embedding_model": getattr(default_engine, "model_name", "builtin")
             }
             self._send_json(200, metrics)
+            return
+
+        elif path == "/api/embedding/status":
+            status = default_engine.get_status() if hasattr(default_engine, "get_status") else {"active_backend": "builtin"}
+            self._send_json(200, status)
             return
 
         elif path == "/api/scenarios":
@@ -312,6 +320,19 @@ class AgentGuardRequestHandler(BaseHTTPRequestHandler):
                 "cosine_threshold": default_scanner.cosine_threshold,
                 "auto_sanitize": default_scanner.auto_sanitize
             })
+            return
+
+        elif path == "/api/embedding/set-mode":
+            mode = body.get("mode", "auto")
+            model_name = body.get("model_name")
+            try:
+                if hasattr(default_engine, "set_mode"):
+                    default_engine.set_mode(mode, model_name)
+                    default_registry.recompute_embeddings(default_engine)
+                status = default_engine.get_status() if hasattr(default_engine, "get_status") else {"active_backend": "builtin"}
+                self._send_json(200, {"status": "SUCCESS", "embedding": status})
+            except Exception as e:
+                self._send_json(400, {"status": "ERROR", "error": str(e)})
             return
 
         elif path == "/api/signatures/add":

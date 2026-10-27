@@ -109,6 +109,24 @@ customer_rep = Agent(
 )
 ```
 
+### 4. Dual-Mode Semantic Embedding Engine (Hugging Face + Fast Built-in)
+AgentGuard features a dual-mode vector embedding architecture:
+- **Hugging Face Dense Neural Mode**: Uses `sentence-transformers` (e.g. `sentence-transformers/all-MiniLM-L6-v2`, `bge-small-en-v1.5`), `transformers` AutoModel, or `huggingface_hub` Inference API for dense semantic similarity.
+- **Fast Deterministic Mode (Pure Python)**: Multi-scale n-gram feature hashing with L2-normalization running with zero external dependencies and sub-millisecond latency.
+- **Auto-Fallback Mode**: Automatically utilizes Hugging Face if available, cleanly falling back to the built-in engine if neural dependencies are not installed.
+
+```python
+from agentguard import DualModeEmbeddingEngine, default_engine
+
+# Check current active mode and detected Hugging Face backends
+print(default_engine.get_status())
+
+# Switch between modes dynamically: 'auto', 'huggingface', 'fast'
+default_engine.set_mode("auto")
+# Or specify a custom Hugging Face model:
+default_engine.set_mode("huggingface", hf_model_name="sentence-transformers/all-MiniLM-L6-v2")
+```
+
 ---
 
 ## 📁 Repository Structure
