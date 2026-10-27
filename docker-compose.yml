@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  agentguard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: agentguard:latest
+    container_name: agentguard_security_gateway
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    environment:
+      - PORT=8765
+      - PYTHONUNBUFFERED=1
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8765/api/metrics"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
